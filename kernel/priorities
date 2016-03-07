@@ -1,0 +1,17 @@
+Scheduler Priority Levels
+	SCHEDULER		/* always gets first priority */
+	KERNEL
+	USER			/* IO directly under control of the user */
+	IO				/* other IO */
+	REAL_TIME
+	APPLICATION
+	MAINTENANCE
+	IDLE
+
+Policy goals
+	no process left idle for too long
+	minimize CPU idle time <=> maximize throughput
+	minimize user response time
+	allow processes to prioritize children
+
+True real-time performance is only possible with special builds
