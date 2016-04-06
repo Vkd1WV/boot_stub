@@ -5,7 +5,7 @@
 
 /* Struct declarations. */
 struct dpeth;
-struct proc;
+struct proc; // declared empty here? mentioned in glo.h
 struct tty;
 
 /* at_wini.c, bios_wini.c, esdi_wini.c, ps_wini.c, xt_wini.c, wini.c */
@@ -122,9 +122,10 @@ char* k_getenv(char *name			);
 void exception(unsigned vec_nr			);
 
 /* i8259.c */
-irq_handler_t get_irq_handler(int irq		);
-void put_irq_handler(int irq, irq_handler_t handler);
-void intr_init(int mine				);
+// interrupt controller stuff
+irq_handler_t get_irq_handler(int irq                        );
+void          put_irq_handler(int irq , irq_handler_t handler);
+void          intr_init      (int mine                       );
 
 /* keyboard.c */
 void kb_init(struct tty *tp			);
@@ -235,141 +236,5 @@ void alloc_segments(struct proc *rp		);
 int wdeth_probe(struct dpeth *dep		);
 
 #endif /* (CHIP == INTEL) */
-
-#if (CHIP == M68000)
-
-/* cstart.c */
-void cstart(char *parmoff, size_t parmsize	);
-
-/* stfloppy.c */
-void fd_timer(void				);
-
-/* stmain.c */
-void none     (void                );
-void rupt     (void                );
-void trap     (void                );
-void checksp  (void                );
-void aciaint  (void                );
-void fake_int (const char *s, int t);
-void timint   (int t               );
-void mdiint   (void                );
-void iob      (int t               );
-void idle_task(void                );
-
-/* rs232.c */
-void siaint(int type				);
-
-/* stcon.c */
-void func_key(void				);
-void dump(void					);
-void putk(int c					);
-
-/* stdma.c */
-void dmagrab(int p, dmaint_t func		);
-void dmafree(int p				);
-void dmaint (void					);
-void dmaaddr(phys_bytes ad			);
-int  dmardat(int mode, int delay			);
-void dmawdat(int mode, int data, int delay	);
-void dmawcmd(int data, unsigned mode		);
-void dmacomm(int mode, int data, int delay	);
-int  dmastat(int mode, int delay			);
-
-/* stdskclk.c */
-int do_xbms(phys_bytes address, int count, int rw, int minor) );
- 
-/* stkbd.c */
-void kbdint(void					);
-void kb_timer(void				);
-int kb_read(int minor, char **bufindirect	);
-void kb_init(int minor				);
-
-/* stshadow.c */
-void mkshadow(struct proc *p, phys_clicks c2	);
-void rmshadow(struct proc *p, phys_clicks *basep,
-		phys_clicks *sizep				);
-void unshadow(struct proc *p			);
- 
-/* stvdu.c */
-void flush(struct tty *tp			);
-void console(struct tty *tp			);
-void out_char(struct tty *tp, int c		);
-void scr_init(int minor				);
-void vduswitch(struct tty *tp			);
-void vdusetup(unsigned int vres, char *vram,
-			    unsigned short *vrgb		);
-void vbl(void					);
-int vdu_loadfont(message *m_ptr			);
-
-/* stwini.c */
-int wini_open(message *mp			);
-int wini_rdwt(message *mp			);
-int wini_hvrdwt(message *mp			);
-int wini_transfer(int rw, int pnr, int minor,
-		long pos, int count, vir_bytes vadr		);
-int wini_ioctl(message *mp			);
-int wini_close(message *mp			);
-
-/* stacsi.c */
-int acsi_cmd(int drive,  unsigned char *cmd, int cmdlen,
-		phys_bytes address, phys_bytes data_len,  int rw);
-
-/* stscsi.c */
-void scsi_task(void				);
-void scsidmaint(void				);
-void scsiint(void				);
-int scsi_cmd(int drive,  unsigned char *cmd, int cmdlen,
-		phys_bytes address, phys_bytes data_len,  int rw);
-
-/* klib68k.s */
-void flipclicks(phys_clicks c1, phys_clicks c2, phys_clicks n) );
-void copyclicks(phys_clicks src, phys_clicks dest,
-		phys_clicks nclicks				);
-void zeroclicks(phys_clicks dest, phys_clicks nclicks);
-void phys_copy(phys_bytes src, phys_bytes dest, phys_bytes n) );
-
-/* stdskclks.s */
-int rd1byte(void					);
-int wr1byte(int					);
-long getsupra(void				);
-long geticd(void					);
-
-/* mpx.s */
-int lock(void					);
-void unlock(void					);
-void restore(int oldsr				);
-void reboot(void					);
-int test_and_set(char *flag			);
-unsigned long get_mem_size(char *start_addr	);
-
-/* stprint.c */
-#ifdef DEBOUT
-void prtc(int c					);
-#endif
-
-#ifdef FPP
-/* fpp.c */
-void fppinit(void				);
-void fpp_new_state(struct proc *rp		);
-void fpp_save(struct proc *rp, struct cpu_state *p);
-struct cpu_state  *fpp_restore(struct proc *rp	);
-
-/* fpps.s */
-void _fppsave(struct state_frame *p		);
-void _fppsavereg(struct fpp_model *p		);
-void _fpprestore(struct state_frame *p		);
-void _fpprestreg(struct fpp_model *p		);
-#endif
-
-#if (SHADOWING == 0)
-/* pmmu.c */
-_PROTOTYPE(void pmmuinit (void				);
-_PROTOTYPE(void pmmu_init_proc (struct proc *rp 		);
-_PROTOTYPE(void pmmu_restore (struct proc *rp 		);
-_PROTOTYPE(void pmmu_delete (struct proc *rp 		);
-_PROTOTYPE(void pmmu_flush (struct proc *rp 			);
-#endif
-
-#endif /* (CHIP == M68000) */
 
 #endif /* PROTO_H */
