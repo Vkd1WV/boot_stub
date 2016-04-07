@@ -1,26 +1,37 @@
-ENTRY(loader)                /* the name of the entry label */
+ENTRY(_start)                /* the name of the entry label */
 
 SECTIONS {
-	. = 0x00100000;          /* the code should be loaded at 1 MB */
-
-	.text ALIGN (0x1000) :   /* align at 4 KB */
+	. = 1M;          /* the code should be loaded at 1 MB */
+	
+	.multiboot : {
+		*(.multiboot)  /* needs to be near the top */
+	}
+	
+	.text BLOCK(4K) : ALIGN(4K)
 	{
-		*(.text)             /* all text sections from all files */
+		*(.text)
 	}
 
-	.rodata ALIGN (0x1000) : /* align at 4 KB */
+	/* Read-only data. */
+	.rodata BLOCK(4K) : ALIGN(4K)
 	{
-		*(.rodata*)          /* all read-only data sections from all files */
+		*(.rodata)
 	}
 
-	.data ALIGN (0x1000) :   /* align at 4 KB */
+	/* Read-write data (initialized) */
+	.data BLOCK(4K) : ALIGN(4K)
 	{
-		*(.data)             /* all data sections from all files */
+		*(.data)
 	}
 
-	.bss ALIGN (0x1000) :    /* align at 4 KB */
+	/* Read-write data (uninitialized) and stack */
+	.bss BLOCK(4K) : ALIGN(4K)
 	{
-		*(COMMON)            /* all COMMON sections from all files */
-		*(.bss)              /* all bss sections from all files */
+		*(COMMON)
+		*(.bss)
+		*(.bootstrap_stack)
 	}
+
+	/* The compiler may produce other sections, by default it will put them in
+	   a segment with the same name. Simply add stuff here as needed. */
 }

@@ -4,10 +4,11 @@
 
 ############################# PRELIMINARIES ####################################
 
-CWARNINGS:=	-Wall -Wextra -pedantic #-Wshadow -Wpointer-arith -Wcast-align \
+CWARNINGS:=	-Wall -Wextra -pedantic -Wshadow -Wpointer-arith -Wcast-align \
 			-Wwrite-strings -Wmissing-prototypes -Wmissing-declarations \
 			-Wredundant-decls -Wnested-externs -Winline -Wno-long-long \
-			-Wuninitialized -Wconversion -Wstrict-prototypes
+			-Wuninitialized -Wstrict-prototypes #-Wconversion
+
 
 SHELL:=		/bin/bash
 CC:=		i686-elf-gcc
@@ -15,7 +16,7 @@ CFLAGS:=	$(CWARNINGS) -I./header -ffreestanding -nostdlib -lgcc -std=c11 -g
 #-mno-red-zone (x86_64 only)
 AS:=		nasm
 ASFLAGS:=	-f elf32
-LD:=		i686-elf-gcc
+LFLAGS:=	-ffreestanding -nostdlib
 
 PROJDIRS:= fs header kernel mm net
 
@@ -33,7 +34,9 @@ PROJDIRS:= fs header kernel mm net
 k_src:=			kernel/*.c kernel/*.s
 k_headers:=		kernel/*.h
 
-k_objects:=		$(shell echo kernel/{loader.o,io.o,main.o,framebuffer.o})
+k_objects:=		$(shell echo \
+	kernel/{boot.o,kernel.o,io.o,global.o})
+
 k_cleanfiles:=	kernel/kernel $(k_objects)
 
 .PHONEY: kernel
@@ -41,10 +44,10 @@ k_cleanfiles:=	kernel/kernel $(k_objects)
 kernel: kernel/kernel
 
 kernel/kernel: $(k_objects) $(k_headers)
-	$(CC) $(CFLAGS) $(k_objects) -o kernel/kernel
+	$(CC) $(LFLAGS) -T kernel/link.ld $(k_objects) -o kernel/kernel
 
 # Build Object Files
-kernel/%.o: kernel/%.c kernel/%.h
+kernel/%.o: kernel/%.c $(k_headers)
 	$(CC) $(CFLAGS) -c $< -o $@
 kernel/%.o: kernel/%.s
 	$(AS) $(ASFLAGS) $< -o $@

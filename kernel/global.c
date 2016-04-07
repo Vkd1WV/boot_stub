@@ -18,6 +18,4 @@
 
 #define _GLOBAL
 
-#include "typedefs.h" // Data types
-#include "const.h"
-#include "global.h"   // Global variable definitions
+#include "kernel.h"
