@@ -1,36 +1,50 @@
 /*
- * A Framebuffer driver
+ * A VGA Framebuffer driver
  */
 
-/********************************** INCLUDES **********************************/
+/******************************************************************************/
+//                                 INCLUDES
+/******************************************************************************/
 
 #include "kernel.h"
 
-/********************************* DEFINITIONS ********************************/
+/******************************************************************************/
+//                         DEFINITIONS & CONSTANTS
+/******************************************************************************/
+
 
 /* The I/O ports */
 #define FB_COMMAND_PORT 0x3D4
 #define FB_DATA_PORT    0x3D5
-#define FB              0x000B8000
+#define FB              0xB8000
 
 /* The I/O port commands */
 #define FB_HIGH_BYTE_CMD    14
 #define FB_LOW_BYTE_CMD     15
 
-static const uint16_t VGA_WIDTH  = 80;
-static const uint16_t VGA_HEIGHT = 25;
+//static const uint16_t VGA_WIDTH  = 80;
+//static const uint16_t VGA_HEIGHT = 25;
 
+#define VGA_WIDTH  80
+#define VGA_HEIGHT 25
 
-/***************************** PRIVATE PROTOTYPES *****************************/
+/******************************************************************************/
+//                             PRIVATE PROTOTYPES
+/******************************************************************************/
+
 
 //static void _scroll(void);
-static void _set_cursor(uint8_t x, uint8_t y);
-static void _inc_cursor(void);
-uint16_t _mk_vgacell(char c);
+static void     _set_cursor(uint8_t x, uint8_t y);
+static void     _inc_cursor(void);
+static uint16_t _mk_vgacell(char c);
 
-/*********************************** GLOBALS **********************************/
 
- static struct {
+/******************************************************************************/
+//                              GLOBAL VARIABLES
+/******************************************************************************/
+
+
+static struct {
 	uint8_t  x;
 	uint8_t  y;
 	uint16_t l_pos;
@@ -38,27 +52,32 @@ uint16_t _mk_vgacell(char c);
 
 static uint8_t _color;
 
-/****************************** PUBLIC FUNCTIONS ******************************/
 
-// Set the color
+/******************************************************************************/
+//                             PUBLIC FUNCTIONS
+/******************************************************************************/
+
+
+// Set the background and foreground color of characters to be written after
 void set_color(enum vga_color fg, enum vga_color bg) {
 	_color = fg | (bg << 4);
 }
 
-/* Clear the framebuffer */
+// Clear the screen
 void clear_vga(){
 	uint16_t* fb;
 	uint16_t cell;
 	
 	_set_cursor(0,0);
-	set_color(WHITE, BLACK);
+	set_color(BLACK, WHITE);
 	cell = _mk_vgacell(' ');
 	
-	for(fb=(uint16_t*)FB; fb < (uint16_t*)(FB+VGA_HEIGHT*VGA_WIDTH); fb++){
+	for(fb=(uint16_t*)FB; fb < (uint16_t*)(FB+VGA_HEIGHT*VGA_WIDTH*sizeof(uint16_t)); fb++){
 		*fb = cell;
 	}
 }
 
+// Print a character at the cursor position
 void kputc(char c){
 	uint16_t* fb;
 	
@@ -68,8 +87,8 @@ void kputc(char c){
 	_inc_cursor();
 }
 
-/* Write a line to the framebuffer */
-uint kputs(char *buf, uint len){
+// Print a string on the next line after the cursor position
+uint kputs(const char *buf, uint len){
 	uint i;
 	
 	if (len > VGA_WIDTH) return 0;
@@ -83,12 +102,12 @@ uint kputs(char *buf, uint len){
 	return i;
 }
 
-/***************************** PRIVATE FUNCTIONS ******************************/
-
 
 /******************************************************************************/
-//                         SET THE CURSOR POSITION
+//                             PRIVATE FUNCTIONS
 /******************************************************************************/
+
+
 static void _set_cursor(uint8_t x, uint8_t y) {
 	cursor_pos.l_pos = y * VGA_WIDTH + x;
 	cursor_pos.x=x;

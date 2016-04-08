@@ -14,7 +14,7 @@ void set_color (enum vga_color fg, enum vga_color bg);
 void clear_vga(void);
 
 /* Write to the framebuffer */
-uint kputs(char *buf, uint len);
+uint kputs(const char *buf, uint len);
 void kputc(char c);
 
 /********************************** io.o **************************************/

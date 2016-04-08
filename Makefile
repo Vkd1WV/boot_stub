@@ -4,15 +4,18 @@
 
 ############################# PRELIMINARIES ####################################
 
-CWARNINGS:=	-Wall -Wextra -pedantic -Wshadow -Wpointer-arith -Wcast-align \
-			-Wwrite-strings -Wmissing-prototypes -Wmissing-declarations \
-			-Wredundant-decls -Wnested-externs -Winline -Wno-long-long \
-			-Wuninitialized -Wstrict-prototypes #-Wconversion
+CWARNINGS:=	-Wall -Wextra -pedantic \
+	-Wmissing-prototypes -Wstrict-prototypes -Wmissing-declarations \
+	-Wredundant-decls -Wnested-externs -Wshadow \
+	-Wpointer-arith -Wcast-align \
+	-Wuninitialized -Wmaybe-uninitialized \
+	-Winline -Wno-long-long \
+	-Wwrite-strings #-Wconversion
 
 
 SHELL:=		/bin/bash
 CC:=		i686-elf-gcc
-CFLAGS:=	$(CWARNINGS) -I./header -ffreestanding -nostdlib -lgcc -std=c11 -g
+CFLAGS:=	$(CWARNINGS) -I./header -ffreestanding -nostdlib -lgcc -std=c99 -g
 #-mno-red-zone (x86_64 only)
 AS:=		nasm
 ASFLAGS:=	-f elf32
@@ -35,7 +38,7 @@ k_src:=			kernel/*.c kernel/*.s
 k_headers:=		kernel/*.h
 
 k_objects:=		$(shell echo \
-	kernel/{boot.o,kernel.o,io.o,global.o})
+	kernel/{boot.o,kernel.o,io.o,framebuffer.o,global.o})
 
 k_cleanfiles:=	kernel/kernel $(k_objects)
 
@@ -60,20 +63,22 @@ disk: iso/boot/kernel os.iso
 iso/boot/kernel: kernel/kernel
 	cp kernel/kernel iso/boot/
 
+os.iso: iso/boot/kernel iso/boot/grub/grub.cfg
+	grub-mkrescue -o os.iso iso
 
-os.iso: iso/boot/kernel iso/boot/grub/menu.lst
-# -R			Rock Ridge filesystem
-# -A			application ID used in disk header
-# -no-emul-boot	BIOS will load the boot image directly without emulating a disk
-	genisoimage                      \
-		-R                           \
-		-A OmniSYS                   \
-		-no-emul-boot                \
-		-b boot/grub/stage2_eltorito \
-		-boot-load-size 4            \
-		-input-charset utf8          \
-		-boot-info-table             \
-		-o os.iso iso
+#os.iso: iso/boot/kernel iso/boot/grub/menu.lst
+## -R			Rock Ridge filesystem
+## -A			application ID used in disk header
+## -no-emul-boot	BIOS will load the boot image directly without emulating a disk
+#	genisoimage                      \
+#		-R                           \
+#		-A OmniSYS                   \
+#		-no-emul-boot                \
+#		-b boot/grub/stage2_eltorito \
+#		-boot-load-size 4            \
+#		-input-charset utf8          \
+#		-boot-info-table             \
+#		-o os.iso iso
 
 ################################ RUN SYSTEM TEST ###############################
 
@@ -82,7 +87,7 @@ test: disk bochsrc.txt
 
 #################################### UTILITY ###################################
 
-cleanfiles=*.iso $(k_cleanfiles)
+cleanfiles=*.iso bochslog.txt $(k_cleanfiles)
 
 clean:
 	rm -f $(cleanfiles)
