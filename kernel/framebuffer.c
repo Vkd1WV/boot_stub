@@ -1,5 +1,5 @@
 /*
- * A VGA Framebuffer driver
+ * A Text mode VGA driver
  */
 
 /******************************************************************************/
@@ -13,29 +13,37 @@
 /******************************************************************************/
 
 
-/* The I/O ports */
-#define FB_COMMAND_PORT 0x3D4
-#define FB_DATA_PORT    0x3D5
-#define FB              0xB8000
+// locations
+//static const uint16_t* const VGA_BUF      = (uint16_t*) 0xB8000;
+//static const uint8_t*  const VGA_ADDR_REG = (uint8_t*)  0x3D4;
+//static const uint8_t*  const VGA_DATA_REG = (uint8_t*)  0x3D5;
+#define VGA_BUF      ((uint16_t*) 0xB8000)
+#define VGA_ADDR_REG ((uint8_t*)  0x3D4)
+#define VGA_DATA_REG ((uint8_t*)  0x3D5)
 
-/* The I/O port commands */
-#define FB_HIGH_BYTE_CMD    14
-#define FB_LOW_BYTE_CMD     15
+// sizes and limits
+//static const uint16_t  VGA_WIDTH  = 80;
+//static const uint16_t  VGA_HEIGHT = 25;
+//static const uint16_t* const VGA_LIM  = VGA_BUF+VGA_HEIGHT*VGA_WIDTH*sizeof(uint16_t);
+#define VGA_WIDTH  ((uint) 80)
+#define VGA_HEIGHT ((uint) 25)
+#define VGA_SIZE   (VGA_HEIGHT*VGA_WIDTH*sizeof(uint16_t))
 
-//static const uint16_t VGA_WIDTH  = 80;
-//static const uint16_t VGA_HEIGHT = 25;
+// Cursor Commands
+//static const uint8_t VGA_CUR_HB = 14;
+//static const uint8_t VGA_CUR_LB = 15;
+#define VGA_CUR_HB ((uint8_t) 14)
+#define VGA_CUR_LB ((uint8_t) 15)
 
-#define VGA_WIDTH  80
-#define VGA_HEIGHT 25
 
 /******************************************************************************/
 //                             PRIVATE PROTOTYPES
 /******************************************************************************/
 
 
-//static void _scroll(void);
-static void     _set_cursor(uint8_t x, uint8_t y);
-static void     _inc_cursor(void);
+static void     _scroll    (void);
+static void     _set_cursor(uint pos);
+//static void     _inc_cursor(void);
 static uint16_t _mk_vgacell(char c);
 
 
@@ -45,12 +53,9 @@ static uint16_t _mk_vgacell(char c);
 
 
 static struct {
-	uint8_t  x;
-	uint8_t  y;
-	uint16_t l_pos;
-} cursor_pos;
-
-static uint8_t _color;
+	uint16_t pos;	// linear position in the buffer
+	uint8_t  color;
+} cursor;
 
 
 /******************************************************************************/
@@ -60,44 +65,51 @@ static uint8_t _color;
 
 // Set the background and foreground color of characters to be written after
 void set_color(enum vga_color fg, enum vga_color bg) {
-	_color = fg | (bg << 4);
+	cursor.color = fg | (bg << 4);
 }
 
 // Clear the screen
 void clear_vga(){
-	uint16_t* fb;
-	uint16_t cell;
+	uint16_t  cell;
+	uint16_t* pos;
 	
-	_set_cursor(0,0);
 	set_color(BLACK, WHITE);
 	cell = _mk_vgacell(' ');
 	
-	for(fb=(uint16_t*)FB; fb < (uint16_t*)(FB+VGA_HEIGHT*VGA_WIDTH*sizeof(uint16_t)); fb++){
-		*fb = cell;
+	for(pos=VGA_BUF; pos < VGA_BUF+VGA_SIZE; pos++){
+		*pos = cell;
 	}
+	
+	_set_cursor(0);
 }
 
 // Print a character at the cursor position
 void kputc(char c){
-	uint16_t* fb;
+	uint16_t* pos;
 	
-	fb = (uint16_t*)(FB+cursor_pos.l_pos);
+	pos = VGA_BUF+cursor.pos;
 	
-	*fb = _mk_vgacell(c);
-	_inc_cursor();
+	*pos = _mk_vgacell(c);
+	_set_cursor(cursor.pos+1);
 }
 
 // Print a string on the next line after the cursor position
 uint kputs(const char *buf, uint len){
 	uint i;
+	uint16_t* pos;
 	
 	if (len > VGA_WIDTH) return 0;
 	
-	_set_cursor(0, cursor_pos.y+1);
-	//if (cursor_pos.y => VGA_HEIGHT) _scroll();
+//	if (start => VGA_SIZE) {
+//		_scroll();
+//		start =- VGA_WIDTH;
+//	}
+	pos = VGA_BUF+cursor.pos;
 	
 	for(i=0; i<len; i++)
-		kputc(buf[i]);
+		pos[i] = _mk_vgacell(buf[i]);
+	
+	_set_cursor(cursor.pos+VGA_WIDTH);
 	
 	return i;
 }
@@ -108,31 +120,28 @@ uint kputs(const char *buf, uint len){
 /******************************************************************************/
 
 
-static void _set_cursor(uint8_t x, uint8_t y) {
-	cursor_pos.l_pos = y * VGA_WIDTH + x;
-	cursor_pos.x=x;
-	cursor_pos.y=y;
-	
-	outb(FB_COMMAND_PORT, FB_HIGH_BYTE_CMD );
-	outb(FB_DATA_PORT   , ((cursor_pos.l_pos >> 8) & 0x00FF)); // & for masking
-	outb(FB_COMMAND_PORT, FB_LOW_BYTE_CMD  );
-	outb(FB_DATA_PORT   , cursor_pos.l_pos & 0x00FF         );
+static void _set_cursor(uint pos) {
+	cursor.pos=pos;
+	outb(VGA_ADDR_REG, VGA_CUR_HB           );
+	outb(VGA_DATA_REG, ((pos >> 8) & 0x00FF)); // & for masking
+	outb(VGA_ADDR_REG, VGA_CUR_LB           );
+	outb(VGA_DATA_REG, pos         & 0x00FF );
 }
 
-static void _inc_cursor(void){
-	cursor_pos.l_pos++;
-	cursor_pos.y =cursor_pos.l_pos / VGA_WIDTH;
-	cursor_pos.x =cursor_pos.l_pos % VGA_WIDTH;
-	
-	outb(FB_COMMAND_PORT, FB_HIGH_BYTE_CMD );
-	outb(FB_DATA_PORT   , ((cursor_pos.l_pos >> 8) & 0x00FF)); // & for masking
-	outb(FB_COMMAND_PORT, FB_LOW_BYTE_CMD  );
-	outb(FB_DATA_PORT   , cursor_pos.l_pos & 0x00FF         );
-}
+//static void _inc_cursor(void){
+//	cursor_pos.l_pos++;
+//	cursor_pos.y =cursor_pos.l_pos / VGA_WIDTH;
+//	cursor_pos.x =cursor_pos.l_pos % VGA_WIDTH;
+//	
+//	outb(VGA_CUR_CMD, FB_HIGH_BYTE_CMD );
+//	outb(FB_DATA_PORT   , ((cursor_pos.l_pos >> 8) & 0x00FF)); // & for masking
+//	outb(VGA_CUR_CMD, FB_LOW_BYTE_CMD  );
+//	outb(FB_DATA_PORT   , cursor_pos.l_pos & 0x00FF         );
+//}
 
-uint16_t _mk_vgacell(char c) {
+static uint16_t _mk_vgacell(char c) {
 	uint16_t c16 = c;
-	uint16_t color16 = _color << 8;
+	uint16_t color16 = cursor.color << 8;
 	return color16 | c16;
 }
 

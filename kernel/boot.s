@@ -12,7 +12,7 @@ MAGIC_NUMBER	equ 0x1BADB002		; 1 bad boot
 
 BOOTSTRAP_STACK_SIZE equ 0x1000
 
-section .mutliboot ; this is the multiboot header for GRUB to find
+section .multiboot ; this is the multiboot header for GRUB to find
 	align 4
 	dd MAGIC_NUMBER
 	dd FLAGS

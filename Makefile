@@ -15,7 +15,7 @@ CWARNINGS:=	-Wall -Wextra -pedantic \
 
 SHELL:=		/bin/bash
 CC:=		i686-elf-gcc
-CFLAGS:=	$(CWARNINGS) -I./header -ffreestanding -nostdlib -lgcc -std=c99 -g
+CFLAGS:=	$(CWARNINGS) -I./header -ffreestanding -nostdlib -lgcc -std=c11 -g
 #-mno-red-zone (x86_64 only)
 AS:=		nasm
 ASFLAGS:=	-f elf32

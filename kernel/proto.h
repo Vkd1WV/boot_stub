@@ -22,6 +22,6 @@ void kputc(char c);
 /** outb:
  *  Sends the given data to the given I/O port. Defined in io.s
  */
-void outb(unsigned short port, uint8_t data);
+void outb(uint8_t* port, uint8_t data);
 
 #endif /* PROTO_H */

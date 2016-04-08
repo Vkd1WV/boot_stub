@@ -3,7 +3,7 @@
 #ifndef _GLOBAL_H
 #define _GLOBAL_H
 
-/* EXTERN is defined as extern except in table.c. */
+/* EXTERN is defined as extern except in global.c. */
 #ifdef _GLOBAL
 #undef  EXTERN
 #define EXTERN
