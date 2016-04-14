@@ -8,6 +8,6 @@
 
 #include <sys/typedefs.h>
 
-#define MB_MAGIC_NUMBER ((uint32_t) 0x2BADB002)
+
 
 #endif // K_TYPEDEFS_H

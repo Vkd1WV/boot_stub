@@ -2,8 +2,8 @@
  * and defines the principal constants.
  */
 
-#ifndef KERNEL_H
-#define KERNEL_H
+#ifndef STAGE32_H
+#define STAGE32_H
 
 #define _KERNEL 1	// This is the Kernel
 
@@ -20,4 +20,4 @@
 #include "debug.h"
 
 
-#endif // KERNEL_H
+#endif // STAGE32_H

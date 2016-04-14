@@ -3,7 +3,7 @@
 #ifndef S_TYPEDEF_H
 #define S_TYPEDEF_H
 
-// Freestanding type headers
+// Freestanding type headers provided by the compiler
 #include <stdbool.h>	// bool types
 #include <stddef.h>		// size_t & NULL
 #include <stdint.h>		// intx_t

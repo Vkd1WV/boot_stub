@@ -42,7 +42,7 @@ section .bss	; reserve space for a stack
 
 section .text
 	global _start
-	extern kernel_entry
+	extern stage_entry
 
 ;	MACHINE STATE
 ; EAX    must contain 0x0x2BADB002
@@ -54,14 +54,29 @@ section .text
 ; All other processor registers and flag bits are undefined.
 
 	_start:
+	; TODO: run CPUID
+	
 	; setup the stack
 	mov esp, stack_top
+	mov ebp, stack_top
+	push 0	; the stack is supposed to be null teriminated?
+	
+	; set the flags register
+	push 0
+	popf
+	; should we set cr0 here?
 	
 	; push EBX & EAX to the stack
-	push ebx
-	push eax
 	
-	call kernel_entry			; call c entry fuction
+	push ebx ; multiboot data table
+	push eax ; multiboot magic no
+	
+	; this function sets up paging
+	call stage_entry			; call c entry fuction
+	
+	; TODO: now we can setup the stack properly
+	
+	; TODO: setup long mode
 	
 	cli			; clear interrupts
 	_hang:

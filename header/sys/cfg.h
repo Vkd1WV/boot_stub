@@ -9,7 +9,7 @@
 //GENERAL
 
 /* Minix release and version numbers. */
-#define OS_RELEASE "2.0"
+#define OS_RELEASE "0"
 #define OS_VERSION "0"
 
 // System application options
@@ -21,6 +21,16 @@
 #define EMBEDDED 3
 
 #define _REAL_TIME 0	// build specifically for realtime system
+
+#ifndef __i386__
+#error "This needs to be compiled with a ix86-elf compiler"
+#endif
+
+#ifdef __arm__
+#endif // __arm__
+
+#ifdef __x86_64__
+#endif // __x86_64__
 
 
 #endif /* _CONFIG_H */
