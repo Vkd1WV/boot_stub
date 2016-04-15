@@ -22,6 +22,7 @@
 #define VGA_WIDTH  ((uint) 80)
 #define VGA_HEIGHT ((uint) 25)
 #define VGA_SIZE   (VGA_HEIGHT*VGA_WIDTH*sizeof(uint16_t))
+#define TAB_WIDTH  8
 
 // Cursor Commands
 #define VGA_CUR_HB ((uint8_t) 14)
@@ -100,6 +101,10 @@ uint kputs(const char *buf){
 			cursor.pos = (cursor.pos/VGA_WIDTH)*VGA_WIDTH + VGA_WIDTH;
 			pos = VGA_BUF + cursor.pos;
 		}
+		else if (buf[i] == '\t'){
+			cursor.pos = (cursor.pos/TAB_WIDTH)*TAB_WIDTH + TAB_WIDTH;
+			pos = VGA_BUF + cursor.pos;
+		}
 		else{
 			*pos = _mk_vgacell(buf[i]);
 			pos++;
@@ -125,8 +130,10 @@ void kputn(uint32_t number){
 			if (temp < 0xa) kputc('0'+temp);
 			else            kputc('A'+ temp - 0xa);
 		}
-		number = number << 4;
+		number <<= 4;
 	}
+	
+	if(zero) kputc('0');
 }
 
 void kputb(uint32_t number){
@@ -146,8 +153,10 @@ void kputb(uint32_t number){
 		}
 		
 		
-		bit_mask = bit_mask >> 1;
+		bit_mask >>= 1;
 	}
+	
+	if(zero) kputc('0');
 }
 
 /******************************************************************************/

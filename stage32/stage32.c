@@ -77,8 +77,31 @@ void stage_entry(uint32_t mb_magic, mb_info_pt mb_data){
 		kputn(mb_data->mem_upper);
 		kputs("\n");
 	}
+	
+	// memory map
 	if (mb_data->flags & MB_MMAP){
+		void* entry=mb_data->mmap_addr;
+		/*
+			memory map can have variable length entries so we can't statically
+			increment the entry pointer. so I'm using a void pointer, and
+			incrementing by the given size.
+			see multiboot.h and the multiboot specification for some details
+		*/
 		
+		
+		kputs("MEMORY MAP\n");
+		kputs("BASE\t\tLENGTH\t\tTYPE\n");
+		for(uint i=0; i< mb_data->mmap_length;){
+			kputn( ((mmap_pt)entry)->base_addr);
+			kputs("\t\t");
+			kputn( ((mmap_pt)entry)->length);
+			kputs("\t\t");
+			kputn( ((mmap_pt)entry)->type);
+			kputs("\n");
+			
+			i += ((mmap_pt)entry)->size +4;
+			entry += ((mmap_pt)entry)->size +4;
+		}
 	}
 	
 	// Drives

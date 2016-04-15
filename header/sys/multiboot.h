@@ -13,8 +13,8 @@
 #define MB_MEM      0x00000001 // flag 0
 #define MB_BOOT_DEV 0x00000002 // flag 1
 #define MB_CMD_LINE 0x00000004 // flag 2
-#define MB_MODS     0x00000008
-#define MB_AOUT     0x00000010
+#define MB_MODS     0x00000008 // flag 3
+#define MB_AOUT     0x00000010 // flag 4
 #define MB_ELF      0x00000020 // flag 5
 #define MB_MMAP     0x00000040 // flag 6
 #define MB_DRIVES   0x00000080 // flag 7
@@ -23,6 +23,13 @@
 #define MB_APM_TBL  0x00000400 // flag 10
 #define MB_VBE      0x00000800 // flag 11
 
+struct __attribute__((packed)) mmap_entry {
+	uint32_t size;		// size of the remaining fields of this structure
+	uint64_t base_addr;
+	uint64_t length;	// size of memory region in bytes
+	uint32_t type;		// type of memory region. 1 is normal memory.
+};
+typedef struct mmap_entry*     mmap_pt;
 
 struct __attribute__((packed)) multiboot_info {
 	uint32_t flags;
@@ -37,7 +44,7 @@ struct __attribute__((packed)) multiboot_info {
 	uint32_t addr;
 	uint32_t shndx;			// flags[5]
 	uint32_t mmap_length;
-	uint32_t mmap_addr;		// flags[6]
+	mmap_pt  mmap_addr;		// flags[6]
 	uint32_t drives_length;
 	uint32_t drives_addr;	// flags[7]
 	uint32_t config_table;	// flags[8]
@@ -50,6 +57,7 @@ struct __attribute__((packed)) multiboot_info {
 	uint16_t vbe_interface_off;
 	uint16_t vbe_interface_len;
 };
+typedef struct multiboot_info* mb_info_pt;
 
 struct __attribute__((packed)) multiboot_module {
 	uint32_t mod_start;
@@ -58,12 +66,7 @@ struct __attribute__((packed)) multiboot_module {
 	uint32_t reserved;
 };
 
-struct __attribute__((packed)) mmap_entry {
-	uint32_t size;
-	uint64_t base_addr;
-	uint64_t length;	// size of memory region in bytes
-	uint32_t type;		// type of memory region. 1 is normal memory.
-};
+
 
 struct __attribute__((packed)) apm_table {
 	uint16_t version;
@@ -77,6 +80,5 @@ struct __attribute__((packed)) apm_table {
 	uint16_t dseg_len;
 };
 
-typedef struct multiboot_info* mb_info_pt;
 
 #endif //MULTIBOOT_H
