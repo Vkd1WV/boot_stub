@@ -6,7 +6,7 @@
 
 SHELL:=		/bin/bash
 
-ARCH:=		ia64
+ARCH:=		x86_64
 ARCHDIR:=arch/$(ARCH)
 
 CWARNINGS:=	-Wall -Wextra -pedantic \

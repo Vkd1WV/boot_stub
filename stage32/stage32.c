@@ -59,12 +59,51 @@ void stage_entry(uint32_t mb_magic, mb_info_pt mb_data){
 		kputs("\n");
 	}
 	
+	
+	if (mb_data->flags & MB_DRIVES && mb_data->drives_length){
+		void* entry=mb_data->drives_addr;
+		/*
+			drive list can have variable length entries so we can't statically
+			increment the entry pointer. so I'm using a void pointer, and
+			incrementing by the given size.
+			see multiboot.h and the multiboot specification for some details
+		*/
+		
+		kputs("DRIVES\n");
+		kputs("NUM\tMODE\tC/H/S\t\tPORTS");
+		for(uint i=0; i<mb_data->drives_length;){
+			kputn(((drive_pt)entry)->drive_number);
+			kputs("\t");
+			kputn(((drive_pt)entry)->drive_mode);
+			kputs("\t");
+			kputn(((drive_pt)entry)->drive_cylinders);
+			kputs("/");
+			kputn(((drive_pt)entry)->drive_heads);
+			kputs("/");
+			kputn(((drive_pt)entry)->drive_sectors);
+			kputs("\t");
+			kputn(((uint16_t*)entry)[5]);
+			kputs("\n");
+			
+			i += ((drive_pt)entry)->size;
+			entry += ((drive_pt)entry)->size;
+		}
+	} // TODO: this if statement has not been tested yet
+	
 	// Module and image data
 	kputs("\n");
-	if (mb_data->flags & MB_MODS){
-		
-	}
 	if (mb_data->flags & MB_ELF){
+		kputs("BOOT IMAGE DATA\n");
+		kputn(mb_data->shdr_num);
+		kputs(" sections of size ");
+		kputn(mb_data->shdr_size);
+		kputs("\n");
+		
+		for(uint i=0; i<mb_data->shdr_num; i++){
+			kputs((char*)((mb_data->shdr_addr)[i]).sh_name);
+		}
+	}
+	if (mb_data->flags & MB_MODS){
 		
 	}
 	
@@ -90,7 +129,7 @@ void stage_entry(uint32_t mb_magic, mb_info_pt mb_data){
 		
 		
 		kputs("MEMORY MAP\n");
-		kputs("BASE\t\tLENGTH\t\tTYPE\n");
+		kputs("OFFSET\t\tSIZE\t\tTYPE\n");
 		for(uint i=0; i< mb_data->mmap_length;){
 			kputn( ((mmap_pt)entry)->base_addr);
 			kputs("\t\t");
@@ -104,11 +143,6 @@ void stage_entry(uint32_t mb_magic, mb_info_pt mb_data){
 		}
 	}
 	
-	// Drives
-	
-	if (mb_data->flags & MB_DRIVES){
-		
-	}
 	
 	// TODO: at this point I would like to read the multiboot data and dump it
 	// to the screen.
