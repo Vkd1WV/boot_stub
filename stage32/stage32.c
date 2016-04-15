@@ -1,16 +1,25 @@
+/******************************************************************************/
+//
+// stage32.c
+//
+// This is the 32-bit boot stage
+// Everything in this file should be hardware independent
+// This stage does system sanity checks, reads information left by the
+// bootloader, and gets the processor into IA-32e mode before jumping into the
+// 64 bit kernel
+//
+/******************************************************************************/
 
-
-#include "../stage32.h"
+#include "stage32.h"
 
 
 /******************************************************************************/
-//                       The Kernel Entry                                  *
-/*===========================================================================*/
+//                       The stage32 Entry point
+/******************************************************************************/
 
 void stage_entry(uint32_t mb_magic, mb_info_pt mb_data);
 
 void stage_entry(uint32_t mb_magic, mb_info_pt mb_data){
-	uint32_t bit_mask =0x80000000;
 	
 	clear_vga();
 	
@@ -26,14 +35,12 @@ void stage_entry(uint32_t mb_magic, mb_info_pt mb_data){
 	if (mb_magic == MB_MAGIC_NUMBER)
 		kputs("Multiboot Detected.\n");
 	
+	// print the multiboot flags to the screen
 	kputs("MULTIBOOT FLAGS: ");
-	for (uint i=0; i< 8 * sizeof(mb_data->flags); i++){
-		if (mb_data->flags & bit_mask) kputc('1');
-		else kputc('0');
-		if (i == 15) kputc(' ');
-		bit_mask = bit_mask >> 1;
-	}
+	kputb(mb_data->flags);
 	kputs("\n");
+	
+	// report bootloader stuff
 	
 	if (mb_data->flags & MB_BL_NAME){
 		kputs("BOOTED BY: ");
@@ -46,11 +53,13 @@ void stage_entry(uint32_t mb_magic, mb_info_pt mb_data){
 		kputs("\n");
 	}
 	if (mb_data->flags & MB_BOOT_DEV){
-		
+		kputs("BIOS BOOT DEVICE: ");
+		kputn(mb_data->boot_device);
+		kputs("\n");
 	}
 	
 	// Module and image data
-	
+	kputs("\n");
 	if (mb_data->flags & MB_MODS){
 		
 	}
@@ -59,9 +68,13 @@ void stage_entry(uint32_t mb_magic, mb_info_pt mb_data){
 	}
 	
 	// Memory information
-	
+	kputs("\n");
 	if (mb_data->flags & MB_MEM){
-		
+		kputs("LOW MEMORY: ");
+		kputn(mb_data->mem_lower);
+		kputs("   HIGH MEMORY: ");
+		kputn(mb_data->mem_upper);
+		kputs("\n");
 	}
 	if (mb_data->flags & MB_MMAP){
 		

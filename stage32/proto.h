@@ -16,6 +16,8 @@ void clear_vga(void);
 /* Write to the framebuffer */
 uint kputs(const char *buf);
 void kputc(char c);
+void kputn(uint32_t number);
+void kputb(uint32_t number);
 
 /********************************** io.o **************************************/
 

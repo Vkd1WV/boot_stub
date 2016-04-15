@@ -38,7 +38,7 @@ PROJDIRS:= fs header kernel mm net
 
 s32_headers:=		stage32/*.h
 s32_objects:=		$(shell echo \
-	stage32/$(ARCH)/{boot.o,stage32.o,io.o,vga.o})
+	stage32/$(ARCH)/{boot.o,io.o,vga.o} stage32/stage32.o)
 
 s32_cleanfiles:=	stage32/stage $(s32_objects)
 
@@ -49,9 +49,9 @@ stage32/stage: $(s32_objects) $(s32_headers)
 	$(CC32) $(LFLAGS) -T stage32/link.ld $(s32_objects) -o stage32/stage
 
 # Build Object Files
-stage32/$(ARCH)/%.o: stage32/$(ARCH)/%.c $(s32_headers)
+stage32/%.o: stage32/%.c $(s32_headers)
 	$(CC32) $(CFLAGS) -c $< -o $@
-stage32/$(ARCH)/%.o: stage32/$(ARCH)/%.s
+stage32/%.o: stage32/%.s
 	$(AS) $(ASF32) $< -o $@
 
 ############################### KERNEL BUILD ###################################
@@ -86,20 +86,6 @@ iso/boot/stage: stage32/stage
 
 os.iso: iso/boot/stage iso/boot/grub/grub.cfg
 	grub-mkrescue -o os.iso iso
-
-#os.iso: iso/boot/kernel iso/boot/grub/menu.lst
-## -R			Rock Ridge filesystem
-## -A			application ID used in disk header
-## -no-emul-boot	BIOS will load the boot image directly without emulating a disk
-#	genisoimage                      \
-#		-R                           \
-#		-A OmniSYS                   \
-#		-no-emul-boot                \
-#		-b boot/grub/stage2_eltorito \
-#		-boot-load-size 4            \
-#		-input-charset utf8          \
-#		-boot-info-table             \
-#		-o os.iso iso
 
 ################################ RUN SYSTEM TEST ###############################
 

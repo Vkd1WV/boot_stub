@@ -107,16 +107,48 @@ uint kputs(const char *buf){
 		}
 	}
 	
-//	for(i=0; buf[i] != '\0'; i++)
-//		pos[i] = _mk_vgacell(buf[i]);
-//	
-//	_set_cursor(cursor.pos+VGA_WIDTH);
-	//_set_cursor(pos+i-VGA_BUF);
 	_set_cursor(cursor.pos);
 	
 	return i;
 }
 
+void kputn(uint32_t number){
+	uint32_t temp;
+	bool zero = true;
+	
+	kputs("0x");
+	for(uint i=0; i<8; i++){
+		temp = (number & 0xf0000000) >> 28;
+		if(zero && !temp); // do nothing on leading 0's
+		else{
+			zero = false;
+			if (temp < 0xa) kputc('0'+temp);
+			else            kputc('A'+ temp - 0xa);
+		}
+		number = number << 4;
+	}
+}
+
+void kputb(uint32_t number){
+	uint32_t bit_mask =0x80000000;
+	bool zero = true;
+	
+	kputs("0b");
+	for (uint i=0; i< 32; i++){
+		if(zero && !(number & bit_mask)); // do nothing on leading 0's
+		else{
+			if (!(i % 8)) kputc(' ');
+			if (number & bit_mask){
+				zero = false;
+				kputc('1');
+			}
+			else kputc('0');
+		}
+		
+		
+		bit_mask = bit_mask >> 1;
+	}
+}
 
 /******************************************************************************/
 //                             PRIVATE FUNCTIONS
