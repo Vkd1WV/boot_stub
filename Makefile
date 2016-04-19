@@ -2,12 +2,11 @@
 # Whole System Makefile
 #
 
-############################# PRELIMINARIES ####################################
+################################ PRELIMINARIES #################################
 
 SHELL:=		/bin/bash
 
 ARCH:=		x86_64
-ARCHDIR:=arch/$(ARCH)
 
 CWARNINGS:=	-Wall -Wextra -pedantic \
 	-Wmissing-prototypes -Wstrict-prototypes -Wmissing-declarations \
@@ -29,7 +28,11 @@ ASF64:=	-f elf64
 
 LFLAGS:=	-ffreestanding -nostdlib
 
+INSTALL:= install -CD
+
 PROJDIRS:= fs header kernel mm net
+HEADERS:= headers/*.h headers/sys/*.h
+SYSROOT:= iso
 
 .PHONEY: clean test
 
@@ -46,7 +49,7 @@ s32_cleanfiles:=	stage32/stage $(s32_objects)
 stage: stage32/stage
 
 stage32/stage: $(s32_objects) $(s32_headers)
-	$(CC32) $(LFLAGS) -T stage32/link.ld $(s32_objects) -o stage32/stage
+	$(CC32) $(LFLAGS) -T stage32/link.ld $(s32_objects) -o $@
 
 # Build Object Files
 stage32/%.o: stage32/%.c $(s32_headers)
@@ -81,11 +84,11 @@ stage32/%.o: stage32/%.s
 .PHONEY: disk
 disk: os.iso
 
-iso/boot/stage: stage32/stage  
-	cp stage32/stage iso/boot/
-
-os.iso: iso/boot/stage iso/boot/grub/grub.cfg
-	grub-mkrescue -o os.iso iso
+os.iso: stage32/stage iso/boot/grub/grub.cfg
+	$(INSTALL) -d $(SYSROOT)/{boot,lib/sys}
+	$(INSTALL) stage32/stage $(SYSROOT)/boot/
+	$(INSTALL) -t $(SYSROOT)/lib header/*.h header/sys/*.h
+	grub-mkrescue -o $@ iso
 
 ################################ RUN SYSTEM TEST ###############################
 
@@ -94,7 +97,7 @@ test: disk bochsrc.txt
 
 #################################### UTILITY ###################################
 
-cleanfiles=*.iso $(s32_cleanfiles)
+cleanfiles=*.iso bochslog.txt snapshot.txt $(s32_cleanfiles)
 
 clean:
 	rm -f $(cleanfiles)

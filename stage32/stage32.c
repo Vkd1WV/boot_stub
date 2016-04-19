@@ -32,7 +32,9 @@ void stage_entry(uint32_t mb_magic, mb_info_pt mb_data){
 		kputs("Data space not zeroed!\n");
 #endif
 	
-	kputs("Stage32 Booted.\n");
+	
+	// report bootloader stuff
+	kputs("==BOOTLOADER==\n");
 	if (mb_magic == MB_MAGIC_NUMBER)
 		kputs("Multiboot Detected.\n");
 	
@@ -40,8 +42,6 @@ void stage_entry(uint32_t mb_magic, mb_info_pt mb_data){
 	kputs("MULTIBOOT FLAGS: ");
 	kputb(mb_data->flags);
 	kputs("\n");
-	
-	// report bootloader stuff
 	
 	if (mb_data->flags & MB_BL_NAME){
 		kputs("BOOTED BY: ");
@@ -53,9 +53,16 @@ void stage_entry(uint32_t mb_magic, mb_info_pt mb_data){
 		kputs(mb_data->cmdline);
 		kputs("\n");
 	}
+	
+	// drive stuff
+	kputs("\n==DRIVES==\n");
 	if (mb_data->flags & MB_BOOT_DEV){
 		kputs("BIOS BOOT DEVICE: ");
-		kputn(mb_data->boot_device);
+		kputn(mb_data->boot_device[0]);
+		for(uint i=1; mb_data->boot_device[i] < 0xff && i<4; i++){
+			kputs(" Partition: ");
+			kputn(mb_data->boot_device[i]);
+		}
 		kputs("\n");
 	}
 	
@@ -69,8 +76,8 @@ void stage_entry(uint32_t mb_magic, mb_info_pt mb_data){
 			see multiboot.h and the multiboot specification for some details
 		*/
 		
-		kputs("DRIVES\n");
-		kputs("NUM\tMODE\tC/H/S\t\tPORTS");
+		kputs("==DRIVES==\n");
+		kputs("NUM\tMODE\tC/H/S\t\tPORTS\n");
 		for(uint i=0; i<mb_data->drives_length;){
 			kputn(((drive_pt)entry)->drive_number);
 			kputs("\t");
@@ -91,9 +98,9 @@ void stage_entry(uint32_t mb_magic, mb_info_pt mb_data){
 	} // TODO: this if statement has not been tested yet
 	
 	// Module and image data
-	kputs("\n");
+	kputs("\n==BOOT IMAGES==\n");
 	if (mb_data->flags & MB_ELF){
-		kputs("BOOT IMAGE DATA\n");
+		kputs("BOOT IMAGE: ");
 		kputn(mb_data->shdr_num);
 		kputs(" sections of size ");
 		kputn(mb_data->shdr_size);
@@ -102,13 +109,14 @@ void stage_entry(uint32_t mb_magic, mb_info_pt mb_data){
 		for(uint i=0; i<mb_data->shdr_num; i++){
 			kputs((char*)((mb_data->shdr_addr)[i]).sh_name);
 		}
+		kputs("\n");
 	}
 	if (mb_data->flags & MB_MODS){
-		
+		//TODO: read module data
 	}
 	
 	// Memory information
-	kputs("\n");
+	kputs("\n==MEMORY==\n");
 	if (mb_data->flags & MB_MEM){
 		kputs("LOW MEMORY: ");
 		kputn(mb_data->mem_lower);
@@ -127,14 +135,16 @@ void stage_entry(uint32_t mb_magic, mb_info_pt mb_data){
 			see multiboot.h and the multiboot specification for some details
 		*/
 		
-		
-		kputs("MEMORY MAP\n");
-		kputs("OFFSET\t\tSIZE\t\tTYPE\n");
+		kputs("OFFSET\t\t\tSIZE\t\t\tTYPE\n");
 		for(uint i=0; i< mb_data->mmap_length;){
-			kputn( ((mmap_pt)entry)->base_addr);
-			kputs("\t\t");
-			kputn( ((mmap_pt)entry)->length);
-			kputs("\t\t");
+			kputn( ((mmap_pt)entry)->base_addr_high);
+			kputc(' ');
+			kputn( ((mmap_pt)entry)->base_addr_low);
+			kputs("\t\t\t");
+			kputn( ((mmap_pt)entry)->length_high);
+			kputc(' ');
+			kputn( ((mmap_pt)entry)->length_low);
+			kputs("\t\t\t");
 			kputn( ((mmap_pt)entry)->type);
 			kputs("\n");
 			
@@ -142,10 +152,6 @@ void stage_entry(uint32_t mb_magic, mb_info_pt mb_data){
 			entry += ((mmap_pt)entry)->size +4;
 		}
 	}
-	
-	
-	// TODO: at this point I would like to read the multiboot data and dump it
-	// to the screen.
 	
 	// TODO: clear the page table
 	// TODO: setup memory maps in the page table

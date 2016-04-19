@@ -9,6 +9,14 @@
 #include <stdint.h>		// intx_t
 #include <limits.h>		// type size limits
 
+//float.h
+//iso646.h
+//stdalign.h
+//stdarg.h
+//stdnoreturn.h //c11
+
+// system convenience definitions
+
 typedef unsigned int uint;
 typedef long long int maxint;
 typedef unsigned long long int maxuint;

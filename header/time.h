@@ -10,7 +10,7 @@
 #define _TIME_H
 
 #define CLOCKS_PER_SEC    60	/* MINIX always uses 60 Hz, even in Europe */
-#include "sys/typedefs.h"
+#include <sys/typedefs.h>
 
 typedef enum { // 13 months of 28 days
 	April=1, May, June,

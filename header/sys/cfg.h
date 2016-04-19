@@ -1,5 +1,5 @@
-#ifndef _CONFIG_H
-#define _CONFIG_H
+#ifndef OS_CONFIG_H
+#define OS_CONFIG_H
 
 /*===========================================================================*
  *		This section contains user-settable parameters		     *
@@ -11,6 +11,7 @@
 /* Minix release and version numbers. */
 #define OS_RELEASE "0"
 #define OS_VERSION "0"
+#define OS_NAME
 
 // System application options
 #define _SYS_APPLICATION DESKTOP
@@ -33,4 +34,4 @@
 #endif // __x86_64__
 
 
-#endif /* _CONFIG_H */
+#endif /* OS_CONFIG_H */

@@ -1,6 +1,9 @@
 /******************************************************************************/
 //                              MULTIBOOT STUFF
 /******************************************************************************/
+// Multiboot bootloaders leave the system in 32bit mode so 64bit types are not
+// allowed here.
+
 
 #ifndef MULTIBOOT_H
 #define MULTIBOOT_H
@@ -25,8 +28,10 @@
 
 struct __attribute__((packed)) mmap_entry {
 	uint32_t size;		// size of the remaining fields of this structure
-	uint64_t base_addr;
-	uint64_t length;	// size of memory region in bytes
+	uint32_t base_addr_low;
+	uint32_t base_addr_high;
+	uint32_t length_low;	// size of memory region in bytes
+	uint32_t length_high;
 	uint32_t type;		// type of memory region. 1 is normal memory.
 };
 
@@ -37,7 +42,7 @@ struct __attribute__((packed)) drive_entry {
 	uint16_t drive_cylinders;
 	uint16_t drive_heads;
 	uint16_t drive_sectors;
-	// remaining space contains some number of ports uint16_t
+	uint16_t ports[];
 };
 
 typedef struct drive_entry* drive_pt;
@@ -47,7 +52,7 @@ struct __attribute__((packed)) multiboot_info {
 	uint32_t flags;
 	uint32_t mem_lower;		// flags[0]
 	uint32_t mem_upper;		// amount of lower and upper memory in kB
-	uint32_t boot_device;	// BIOS Boot device.	flags[1]
+	uint8_t  boot_device[4];	// BIOS Boot device.	flags[1]
 	char*    cmdline;			// flags[2] null terminated string
 	uint32_t mods_count;
 	uint32_t mods_addr;		// flags[3]
@@ -74,7 +79,7 @@ typedef struct multiboot_info* mb_info_pt;
 struct __attribute__((packed)) multiboot_module {
 	uint32_t mod_start;
 	uint32_t mod_end;
-	char*    string;	// arbitrary null terminated string
+	uint32_t string;	// arbitrary null terminated string
 	uint32_t reserved;
 };
 
