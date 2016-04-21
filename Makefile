@@ -4,58 +4,31 @@
 
 ################################ PRELIMINARIES #################################
 
-SHELL:=		/bin/bash
-
-ARCH:=		x86_64
-
-CWARNINGS:=	-Wall -Wextra -pedantic \
-	-Wmissing-prototypes -Wstrict-prototypes -Wmissing-declarations \
-	-Wredundant-decls -Wnested-externs -Wshadow \
-	-Wpointer-arith -Wcast-align \
-	-Wuninitialized -Wmaybe-uninitialized \
-	-Winline -Wno-long-long \
-	-Wwrite-strings #-Wconversion
+include config.mk
 
 
-CC32:=		i686-elf-gcc
-CC64:=		$(ARCH)-elf-gcc
-CFLAGS:=	$(CWARNINGS) -I./header -ffreestanding -nostdlib -lgcc -std=c11 -g -DDEBUG
+CFLAGS+=	$(CWARNINGS) -I./header -ffreestanding -nostdlib -lgcc 
+
+#look for include files in each of the modules
+CFLAGS += $(patsubst %,-I%, $(MODULES))
 #-mno-red-zone (x86_64 only)
-
-AS:=		nasm
-ASF32:=	-f elf32
-ASF64:=	-f elf64
 
 LFLAGS:=	-ffreestanding -nostdlib
 
-INSTALL:= install -CD
-
-PROJDIRS:= fs header kernel mm net
-HEADERS:= headers/*.h headers/sys/*.h
-SYSROOT:= iso
 
 .PHONEY: clean test
 
+#extra libraries if required
+LIBS :=
 
-################################ STAGE BUILD ###################################
+#each module will add to this
+SRC :=
 
-s32_headers:=		stage32/*.h
-s32_objects:=		$(shell echo \
-	stage32/$(ARCH)/{boot.o,io.o,vga.o} stage32/stage32.o)
+cleanfiles=*.iso bochslog.txt snapshot.txt
 
-s32_cleanfiles:=	stage32/stage $(s32_objects)
+#include the description for each module
+include $(patsubst %, %/module.mk, $(MODULES))
 
-.PHONEY: stage
-stage: stage32/stage
-
-stage32/stage: $(s32_objects) $(s32_headers)
-	$(CC32) $(LFLAGS) -T stage32/link.ld $(s32_objects) -o $@
-
-# Build Object Files
-stage32/%.o: stage32/%.c $(s32_headers)
-	$(CC32) $(CFLAGS) -c $< -o $@
-stage32/%.o: stage32/%.s
-	$(AS) $(ASF32) $< -o $@
 
 ############################### KERNEL BUILD ###################################
 
@@ -84,11 +57,12 @@ stage32/%.o: stage32/%.s
 .PHONEY: disk
 disk: os.iso
 
-os.iso: stage32/stage iso/boot/grub/grub.cfg
-	$(INSTALL) -d $(SYSROOT)/{boot,lib/sys}
-	$(INSTALL) stage32/stage $(SYSROOT)/boot/
-	$(INSTALL) -t $(SYSROOT)/lib header/*.h header/sys/*.h
-	grub-mkrescue -o $@ iso
+os.iso: stage32/stage32 stage32/grub.cfg
+	mkdir -p $(CFGDIR) $(DOCDIR) $(EXEDIR) $(LIBDIR) $(HDRDIR)
+	cp stage32/stage32    $(EXEDIR)/
+	cp stage32/grub.cfg $(CFGDIR)/
+	grub-mkrescue --product-name=$(OS_NAME) --product-version=$(OS_VERSION) \
+		-o $@ $(PREFIX)
 
 ################################ RUN SYSTEM TEST ###############################
 
@@ -97,10 +71,11 @@ test: disk bochsrc.txt
 
 #################################### UTILITY ###################################
 
-cleanfiles=*.iso bochslog.txt snapshot.txt $(s32_cleanfiles)
+
 
 clean:
 	rm -f $(cleanfiles)
+	rm -fr $(PREFIX)
 
 todolist:
 	-@for file in $(ALLFILES:Makefile=); do fgrep -H -e TODO -e FIXME $$file; done; true
